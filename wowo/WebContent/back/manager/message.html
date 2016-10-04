@@ -1,0 +1,50 @@
+<table id="message_table"></table>
+<script type="text/javascript">	
+	var aid;
+	$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+		aid=data.aid;
+		show_table();
+	},"json");
+	
+	function show_table(){
+		$('#message_table').datagrid({   
+		    url:'../../shoppingServlet', 
+		    queryParams:{op:"findMessageByPage",aid:aid},
+		    loadMsg:"数据加载中",
+		    fitColumns:true,
+		    striped:true,
+		    nowrap:true,
+		    fit:true,
+		    pagination:true,
+		    rownumbers:true,
+		    pageList:[5,10,20,30,40,50,100],
+		    pageSize:5,
+		    sortName:"mid",
+		    remoteSort:false,
+		    columns:[[   
+		        {field:'mids',title:'选择',width:100,align:'center',checkbox:true},   
+		        {field:'mid',title:'消息编号',width:100,align:'center',sortable:true},   
+		        {field:'title',title:'消息标题',width:150,align:'center'},   
+		        {field:'content',title:'消息内容',width:300,align:'center'},   
+		        {field:'dates',title:'消息日期',width:150,align:'center'},  
+		        {field:'aid',title:'店铺管理员编号',width:100,align:'center'}, 
+		        {field:'_ope',title:'操作',width:100,align:'center',formatter:function(val,row,index){
+		        	return "<a href='javascript:delMessage("+JSON.stringify(row)+")'>清除此消息</a>";
+		        }} 
+		    ]]   
+		});   
+	}
+	
+	function delMessage(row){
+		mid=row.mid;
+		
+		$.post("../../shoppingServlet",{op:"delMessage",mid:mid},function(data){
+			if(data>0){
+				$.messager.show({title:'成功提示',msg:'消息清除成功',timeout:2000,showType:'slide'});
+				$('#message_table').datagrid("reload");
+			}else{
+				$.messager.alert("失败提示","消息清除失败","error");
+			}
+		});
+	}
+</script>

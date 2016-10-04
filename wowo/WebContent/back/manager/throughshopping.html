@@ -1,0 +1,107 @@
+<table id="throughshopping"></table>  
+
+<style>
+	#a{
+		margin-left:10px;
+		text-decoration: none;
+	}
+</style>
+
+<script type="text/javascript">
+	var Rid;
+	var status=0;
+	var flag;
+	$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+		Rid=data.rid;
+	},"json");
+	
+	$('#throughshopping').datagrid({  
+		url:'../../shoppingServlet',   
+	    queryParams:{op:"adminsLookshopping",status:status},
+	    loadMsg:"数据加载中",
+	    fitColumns:true,
+	    striped:true,
+	    nowrap:true,
+	    fit:true,
+	    pagination:true,
+	    rownumbers:true,
+	    pageList:[5,10,20,30,40,50,100],
+	    pageSize:5,
+	    sortName:"spid",
+	    remoteSort:false, 
+	    columns:[[   
+			{field:'spids',title:'选择',width:100,checkbox:true}, 
+			{field:'spid',title:'店铺编号',width:100,sortable:true},   
+			{field:'sname',title:'店铺名称',width:100},   
+			{field:'aname',title:'店铺管理员',width:100,align:'right'},
+			{field:'tname',title:'商品类型',width:100,align:'right'},
+			{field:'prov',title:'prov',width:100,align:'right'},
+			{field:'city',title:'city',width:100,align:'right'},
+			{field:'area',title:'area',width:100,align:'right'},
+			{field:'points',title:'详细地址',width:100,align:'right'},
+			{field:'statusStr',title:'店铺状态',width:100,align:'right'},
+			{field:'_operate',title:'是否通过审核',width:200,align:'center',formatter:function(val,row,index){
+	        	return "<a  id='a' href='javascript:changeStatus("+JSON.stringify(row)+")'>通过</a>"+
+	        	"<a  id='a' href='javascript:setMessage("+JSON.stringify(row)+")'>不通过</a>";
+	        }}
+	    ]]   
+	});  
+	
+	function changeStatus(row){
+		if(Rid>1002){//店家
+			alert("您不是管理员，没有此权限！！！");
+			return;
+		}else{//管理员
+			var spid=row.spid;
+			var status=2;
+			var sname=row.sname;
+			var aid=row.aid;
+			var title="您的店铺审核信息";
+			
+			$.post("../../shoppingServlet",{op:"changeStatus",spid:spid,status:status},function(data){
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'店铺审核完成,正在发送审核信息信息给店家...',timeout:2000,showType:'slide'});
+					$("#throughshopping").datagrid("reload");
+					$.post("../../shoppingServlet",{op:"addMessage",aid:aid,status:status,title:title,spid:spid,sname:sname},function(data){
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:'信息发送成功',timeout:2000,showType:'slide'});
+						}else{
+							$.messager.alert("失败提示","信息发送失败","error");
+						}
+					},"json");
+				}else{
+					$.messager.alert("失败提示","店铺审核失败","error");
+				}
+			});
+		}
+	}
+	
+	function setMessage(row){
+		if(Rid>1002){//店家
+			alert("您不是管理员，没有此权限！！！");
+			return;
+		}else{//管理员
+			var spid=row.spid;
+			var status=1;
+			var sname=row.sname;
+			var aid=row.aid;
+			var title="您的店铺审核信息";
+			
+			$.post("../../shoppingServlet",{op:"changeStatus",spid:spid,status:status},function(data){
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'店铺审核完成,正在发送审核信息信息给店家...',timeout:2000,showType:'slide'});
+					$("#throughshopping").datagrid("reload");
+					$.post("../../shoppingServlet",{op:"addMessage",aid:aid,status:status,title:title,spid:spid,sname:sname},function(data){
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:'信息发送成功',timeout:2000,showType:'slide'});
+						}else{
+							$.messager.alert("失败提示","信息发送失败","error");
+						}
+					},"json");
+				}else{
+					$.messager.alert("失败提示","店铺审核失败","error");
+				}
+			});
+		}
+	}
+</script>

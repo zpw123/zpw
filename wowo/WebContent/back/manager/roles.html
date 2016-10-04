@@ -1,0 +1,158 @@
+<table id="roles_dataInfo"></table>  
+<<script type="text/javascript">
+	var datagrid;
+	var editRow=undefined;
+	var statusObj=[{sid:1,statusStr:'正常'},{sid:0,statusStr:'已禁用'}];
+	var op;
+	var flag;
+
+	datagrid=$('#roles_dataInfo').datagrid({   
+	    url:'../../rolesServlet', 
+	    queryParams:{op:"findRolesByPage"},
+	    loadMsg:"数据加载中",
+	    fitColumns:true,
+	    striped:true,
+	    nowrap:true,
+	    fit:true,
+	    pagination:true,
+	    rownumbers:true,
+	    pageList:[5,10,20,30,40,50,100],
+	    pageSize:5,
+	    sortName:"rid",
+	    remoteSort:false,
+	    columns:[[   
+	        {field:'rids',title:'选择',width:100,align:'center',checkbox:true},   
+	        {field:'rid',title:'角色编号',width:100,align:'center',sortable:true},   
+	        {field:'rname',title:'角色名字',width:100,align:'center',editor:{type:"text",options:{required:true}}},   
+	        {field:'mark',title:'角色描述',width:100,align:'center',editor:{type:"text"}},   
+	        {field:'status',title:'角色状态',width:100,align:'center',editor:{type:"combobox",
+	        	options:{required:true,valueField:'sid',textField:'statusStr',data:statusObj }},
+	        	formatter:function(value,row,index){
+	        		for(var i=0;i<statusObj.length;i++){
+	        			if(statusObj[i].sid==value){
+	        				return statusObj[i].statusStr;
+	        			}
+	        		}
+	        		return value;
+	        	}
+	        }   
+	    ]]   
+	}); 
+	
+	$(function(){
+		var rid;
+		$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+			rid=data.rid;
+			if(rid>1002){//店家
+				return;
+			}else{//管理员
+				datagrid.datagrid({
+					toolbar: [{
+						iconCls: 'icon-add',
+						text:"添加",
+						handler: function(){
+							op="addRoles";
+							flag="添加";
+							if(editRow!=undefined){
+								datagrid.datagrid("rejectChanges");
+								datagrid.datagrid('endEdit',editRow);
+								editRow=undefined;
+							}else{
+								datagrid.datagrid('insertRow',{index:0,row:{}});
+								datagrid.datagrid('beginEdit',0);
+								editRow=0;
+							}
+						}
+					},'-',{
+						iconCls: 'icon-edit',
+						text:"修改",
+						handler: function(){
+							op="updateRoles";
+							flag="修改";
+							var row=datagrid.datagrid("getChecked")[0];
+							if(row==undefined){
+								$.messager.alert('提示','请选择要修改的行','info');
+							}else{
+								if(editRow!=undefined){
+									datagrid.datagrid("rejectChanges");
+									datagrid.datagrid('endEdit',editRow);
+									editRow=undefined;
+								}else{
+									var index=datagrid.datagrid("getRowIndex",row);
+									datagrid.datagrid("updateRow",{index:index,row:row});
+									datagrid.datagrid("beginEdit",index);
+									editRow=index;
+								}
+							}
+						}
+					},'-',{
+						iconCls: 'icon-remove',
+						text:"删除",
+						handler: function(){
+							var rows=datagrid.datagrid("getChecked");
+							if(rows.length<=0){
+								$.messager.alert('提示','请选择要删除的行','info');
+							}else{
+								$.messager.confirm('删除确认', '你确定要删除选中的数据？', function(rt){
+									if(rt){
+										var rids="";
+										for(var i=0;i<rows.length-1;i++){
+											rids+=row[i].rid+",";
+										}
+										
+										rids+=rows[i].rid;
+										
+										$.post("../../rolesServlet",{op:"deleteRoles",rid:rids},function(data){
+											data=parseInt(data);
+											if(data>0){
+												$.messager.show({title:'成功提示',msg:'角色删除成功',timeout:2000,showType:'slide'});
+												datagrid.datagrid("reload");
+											}else{
+												$.messager.alert('失败提示','角色删除失败','error');
+											}
+										});
+									}
+								});
+							}
+						}
+					},'-',{
+						iconCls: 'icon-save',
+						text:"保存",
+						handler: function(){
+							datagrid.datagrid('endEdit',editRow);
+							var rows=datagrid.datagrid("getChanges")[0];
+							if(rows==undefined){
+								datagrid.datagrid("rejectChanges");
+								datagrid.datagrid("unselectAll");
+								editRow=undefined;
+							}else{
+								rows["op"]=op;
+								
+								$.post("../../rolesServlet",rows,function(data){
+									data=parseInt(data);
+									if(data>0){
+										$.messager.show({title:'成功提示',msg:'角色'+flag+'成功',timeout:2000,showType:'slide'});
+										rows=null;
+										datagrid.datagrid("reload");
+										datagrid.datagrid("rejectChanges");
+										datagrid.datagrid("unselectAll");
+									}else{
+										$.messager.alert('失败提示','角色'+flag+'失败','error');
+									}
+								});
+							}
+						}
+					},'-',{
+						iconCls: 'icon-redo',
+						text:"撤销",
+						handler: function(){
+							datagrid.datagrid("rejectChanges");
+							datagrid.datagrid('endEdit',editRow);
+							editRow=undefined;
+						}
+					}]
+				});
+			}
+		},"json");
+	});
+</script>

@@ -1,0 +1,90 @@
+<table id="orders_table"></table>  
+<script type="text/javascript">
+	var Rid;
+	$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+		Rid=data.rid;
+	},"json");
+	$('#orders_table').datagrid({   
+	    url:'../../ordersServlet',   
+	    queryParams:{op:"findOrdersByPage"},
+	    loadMsg:"数据加载中",
+	    fitColumns:true,
+	    striped:true,
+	    nowrap:true,
+	    fit:true,
+	    pagination:true,
+	    rownumbers:true,
+	    pageList:[5,10,20,30,40,50,100],
+	    pageSize:5,
+	    sortName:"oid",
+	    remoteSort:false,
+	    columns:[[   
+			{field:'oids',title:'选择',width:100,align:'center',checkbox:true}, 
+			{field:'oid',title:'订单编号',width:100,align:'center',sortable:true}, 
+	        {field:'dates',title:'订单日期',width:100,align:'center'},   
+	        {field:'uname',title:'用户姓名',width:100,align:'center'}, 
+	        {field:'gname',title:'商品名称',width:100,align:'center'}, 
+	        {field:'nums',title:'数量',width:100,align:'center'}, 
+	        {field:'totalprice',title:'总额',width:100,align:'center'}, 
+	        {field:'statusStr',title:'状态',width:100,align:'center'}, 
+	        {field:'_operate',title:'操作',width:140,align:'center',formatter:function(val,row,index){
+	        	return "<a href='' class='icon-search1 icon-padding' >详细</a>"+
+	        	"&nbsp;&nbsp;<a href='javascript:delOrders()' class='icon-remove1 icon-padding'>删除</a>"+
+	        	"<a href='javascript:updateOrders("+JSON.stringify(row)+")' class='icon-edit2 icon-padding'>发货</a>";
+	        }}
+	    ]],
+	});  
+	
+	function updateOrders(row){
+		if(Rid>1002){//店家
+			var status=row.status;
+			var oid=row.oid;
+			if(status==0){
+				$.post("../../ordersServlet",{op:"updateOrder",oid:oid},function(data){
+					if(data>0){
+						$.messager.show({title:'成功提示',msg:'发货成功成功',timeout:2000,showType:'slide'});
+						$("#orders_table").datagrid("reload");
+					}else{
+						$.messager.alert('失败提示','发货失败','error');
+					}
+				},"json");
+			}else{
+				alert("你已经发货！！！");
+				return;
+			}
+		}else{//管理员
+			alert("您不是店家！！！");
+			return;
+		}
+	}
+	
+	function delOrders(){
+		if(Rid>1002){//店家
+			alert("您不是管理员,没有此权限！！！");
+			return;
+		}else{//管理员
+			var rows=$("#orders_table").datagrid("getChecked");
+			var aids="";
+			for(var i=0;i<rows.length-1;i++){
+				aids+=rows[i].oid+",";
+			}
+			
+			aids+=rows[i].oid;
+			
+			if(aids==""){
+				$.messager.alert('提示','请选择你要删除的管理员','error');
+				return;
+			}
+			
+			$.post("../../ordersServlet",{op:"deleteOrder",oid:aids},function(data){
+				data=parseInt(data);
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'订单删除成功',timeout:2000,showType:'slide'});
+					$("#orders_table").datagrid("reload");
+				}else{
+					$.messager.alert('失败提示','订单删除失败','error');
+				}
+			});
+		}
+	}
+</script>

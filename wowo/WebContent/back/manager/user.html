@@ -1,0 +1,120 @@
+<table id="user_dataInfo"></table>
+<div id="user_search" style="height:30px">
+	<a href="javascript:delUserInfo()" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" style="float:left">删除</a>
+	<div class="datagrid-btn-separator"></div>
+	<label>请输入用户姓名：</label><input type="text" name="uname" id="user_select_uname">
+	<label>请选择状态：</label><select name="status" id="user_select_status">
+		<option value="-1">--请选择--</option>
+		<option value="0">--未审核--</option>
+		<option value="1">--未通过--</option>
+		<option value="2">--正常登陆--</option>
+		<option value="3">--冻结--</option>
+	</select>&nbsp;&nbsp;
+	<a href="javascript:search_userInfo()" class="easyui-linkbutton" data-options="iconCls:'icon-search'">查找</a>
+</div>
+
+<style>
+	label{
+		margin-left:10px;
+	}
+</style>
+
+<script>
+	$("#user_dataInfo").datagrid({
+		url:'../../userInfoServlet',   
+	    queryParams:{op:"findUserInfoByPage"},
+	    loadMsg:"数据加载中",
+	    fitColumns:true,
+	    striped:true,
+	    nowrap:true,
+	    fit:true,
+	    pagination:true,
+	    rownumbers:true,
+	    pageList:[5,10,20,30,40,50,100],
+	    pageSize:5,
+	    sortName:"usid",
+	    remoteSort:false,
+	    
+	    columns:[[   
+	  			{field:'uid',title:'选择',width:100,align:'center',checkbox:true}, 
+	  			{field:'photo',title:'头像',width:100,align:'center',formatter:function(value,row,index){
+	  				if(value==""){
+	  					return "<img src='../../images/1.jpg' width='100px' height='100px'/>";
+	  				}else{
+	  					return "<img src='../../"+value+"' width='100px' height='100px'/>";
+	  				}
+	  			}},  
+	  			{field:'usid',title:'用户编号',width:80,align:'center',sortable:true}, 
+	  	        {field:'uname',title:'用户姓名',width:80,align:'center'},     
+	  	        {field:'email',title:'邮箱',width:100,align:'center'}, 
+	  	        {field:'tel',title:'联系方式',width:100,align:'center'}, 
+	  	        {field:'statusStr',title:'状态',width:100,align:'center'}, 
+	  	        {field:'_operate',title:'操作',width:140,align:'center',formatter:function(val,row,index){
+	  	        	return "<a href='' class='icon-search1 icon-padding' >详细</a>"+
+	  	        	"&nbsp;&nbsp;<a href='javascript:delUserInfo()' class='icon-remove1 icon-padding'>删除</a>";
+	  	        }}
+	  	    ]],
+	  	    toolbar:"#user_search"
+		});
+		
+		function delUserInfo(){
+			var rid;
+			$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+				rid=data.rid;
+				if(rid>1002){//店家
+					alert("您不是管理员,没有此权限！！！");
+					return;
+				}else{//管理员
+					var rows=$("#user_dataInfo").datagrid("getChecked");
+					if(rows==""){
+						$.messager.alert('提示','请选择你要删除的数据','info');
+						return;			
+					}
+					var uid="";
+					for(var i=0;i<rows.length-1;i++){
+						uid+=rows[i].usid+",";
+					}
+					uid+=rows[i].usid;
+					
+					if(uid==""){
+						return;
+					}else{
+						$.messager.confirm('提示', '你确定要删除这条数据吗？', function(r){
+							if (r){
+								$.post("../../userInfoServlet",{op:"delUserInfo",uid:uid},function(data){
+									data=$.trim(parseInt(data));
+									if(data>0){
+										$.messager.show({title:"成功提示",msg:"信息删除成功",timeout:2000,showType:"slide"});
+										$("#user_dataInfo").datagrid("reload");
+									}else{
+										$.messager.alert('失败','信息删除失败','info');
+									}
+								},"json");
+							}
+							$("#user_dataInfo").datagrid("unselectAll");
+						});
+					}
+				}
+			},"json");
+		}
+		
+		function search_userInfo(){
+			var rid;
+			$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+				rid=data.rid;
+				if(rid>1002){//店家
+					alert("你不是管理员，没有此权限！！！");
+					return;
+				}else{//管理员
+					var uname=$.trim($("#user_select_uname").val());
+					var status=$("#user_select_status").val();
+					
+					$("#user_dataInfo").datagrid({
+						url:"../../userInfoServlet",
+						queryParams:{op:"searchUserInfoByPage",uname:uname,status:status}
+					});
+				}
+			},"json");
+		}
+		
+</script>

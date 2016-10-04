@@ -1,0 +1,299 @@
+<table id="editgoods_table"></table> 
+<!--  工具栏   -->
+<div id="goods_search" style="height:30px">
+	<a href="javascript:addGoods()" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" style="float:left">添加</a>
+	<div class="datagrid-btn-separator"></div>
+	<a href="javascript:delGoods()" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" style="float:left">删除</a>
+	<div class="datagrid-btn-separator"></div>
+	<label>店铺管理员编号：</label><input type="text" name="aid" id="goods_select_aid">
+	<label>请选择店铺：</label><select name="shopping" id="goods_select_shopping">
+		<option value="-1">--请选择--</option>
+	</select>&nbsp;
+	<label>请输入商品名称：</label><input type="text" name="gname" id="goods_select_gname">
+	<label>请选择状态：</label><select name="status" id="goods_select_status">
+		<option value="-1">--请选择--</option>
+		<option value="0">--未上架--</option>
+		<option value="1">--为下架--</option>
+	</select>&nbsp;&nbsp;
+	<a href="javascript:search_goods()" class="easyui-linkbutton" data-options="iconCls:'icon-search'">查找</a>
+</div>
+
+<div id="updateGoods_dialog" class="easyui-dialog" title="修改商品" data-options="iconCls:'icon-edit',resizable:true,modal:true,fit:true,closed:true" >  
+  	<div class="admin_left">
+	  	<form action="">
+	  		<br/><br/>
+	  		<a href="javascript:update_goods()"  class="easyui-linkbutton" data-options="iconCls:'icon-edit'" style="margin-left:60px">修改</a>
+	  		<ul>
+	  			<li>
+	  			<span>店铺管理员编号：</span>
+	  				<input type="text" id="update_goods_aid"/>
+	  			</li>
+	  			<li>
+	  				<span>店铺名称：</span>
+	  				<select name="update_shopping_name" id="update_shopping_name">
+	  					
+	  				</select> 
+	  			</li>
+	  			<li>
+	  				<span>商品名称：</span>
+	  				<input type="text" name="update_goods_name" id="update_goods_name" placeholder="请输入你的商品名称" required="required"/>
+	  			</li>
+	  			<li>
+	  				<span>商品价格：</span>
+	  				<input type="text" name="update_goods_price" id="update_goods_price" required="required"/>
+	  			</li>
+	  			<li>
+	  				<span>商品状态：</span>
+	  				<input type="text" name="update_goods_status" id="update_goods_status" placeholder="请输入你的商品状态（0或1）" required="required"/>
+	  			</li>
+	  			<li>
+	  				<span>商品图片：</span>
+	  				<input type="file" name="update_goods_pic" id="update_goods_pic" required="required"/>
+	  			</li>
+	  			<li>
+					<span>商品描述：</span> 
+					<script id="update_editor" type="text/plain" style="width:900px;height:300px;margin-left:70px"></script>
+				</li>
+	  		</ul>
+	  	</form>
+	  </div>
+</div>  
+
+<div id="addGoods_dialog" class="easyui-dialog" title="添加商品" data-options="iconCls:'icon-add',resizable:true,modal:true,fit:true,closed:true" >  
+  	<div class="admin_left">
+	  	<form action="">
+	  		<br/><br/>
+	  		<a href="javascript:add_goods()"  class="easyui-linkbutton" data-options="iconCls:'icon-add'" style="margin-left:60px">添加</a>
+	  		<ul>
+	  			<li>
+	  			<span>店铺管理员编号：</span>
+	  				<input type="text" id="goods_aid"/>
+	  			</li>
+	  			<li>
+	  				<span>店铺名称：</span>
+	  				<select name="shopping_name" id="shopping_name">
+	  					
+	  				</select> 
+	  			</li>
+	  			<li>
+	  				<span>商品名称：</span>
+	  				<input type="text" name="goods_name" id="goods_name" placeholder="请输入你的商品名称" required="required"/>
+	  			</li>
+	  			<li>
+	  				<span>商品价格：</span>
+	  				<input type="text" name="goods_price" id="goods_price" required="required"/>
+	  			</li>
+	  			<li>
+	  				<span>商品图片：</span>
+	  				<input type="file" name="goods_pic" id="goods_pic" required="required"/>
+	  			</li>
+	  			<li>
+					<span>商品描述：</span> 
+					<script id="editor" type="text/plain" style="width:900px;height:300px;margin-left:70px"></script>
+				</li>
+	  		</ul>
+	  	</form>
+	  </div>
+</div>  
+
+<style>
+	.admin_left{
+		float:left;
+		margin-left:20px;
+	}
+	
+	.admin_left li{
+		list-style-type:none;
+		margin-top:20px;
+	}
+	
+	.admin_left li span{
+		display:inline-block;
+		width:120px;
+		text-align:right;
+		margin-right:10px;
+	}
+	
+	.admin_left li input,.admin_left li select{
+		width:200px;
+		border:1px solid #6198CD;
+	}
+</style>
+
+<script type="text/javascript">
+	var Rid;
+	var aid;
+	var spid;
+	var gid;
+	var ue=UE.getEditor('editor');
+	var ue1=UE.getEditor('update_editor');
+	$(function(){
+		$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+			Rid=data.rid;
+			aid=data.aid;
+			spid=data.spid;
+			$("#goods_select_aid").val(aid);
+			var obj=$("#goods_select_shopping");
+			var obj1=$("#shopping_name");
+			var obj2=$("#update_shopping_name");
+			$.post("../../shoppingServlet",{op:"getshoppings",aid:aid},function(data){
+				$.each(data,function(index,item){
+					obj.append($("<option value='"+item.spid+"'>"+item.sname+"</option>"));
+					obj1.append($("<option value='"+item.spid+"'>"+item.sname+"</option>"));
+					obj2.append($("<option value='"+item.spid+"'>"+item.sname+"</option>"));
+				});
+			},"json");
+			
+			if(Rid>1002){//店家
+				$('#editgoods_table').datagrid({   
+				    url:'../../goodsServlet',   
+				    queryParams:{op:"findGoodsByPage",aid:aid},
+				    loadMsg:"数据加载中",
+				    fitColumns:true,
+				    striped:true,
+				    nowrap:true,
+				    fit:true,
+				    pagination:true,
+				    rownumbers:true,
+				    pageList:[5,10,20,30,40,50,100],
+				    pageSize:5,
+				    sortName:"gid",
+				    remoteSort:false,
+				    columns:[[   
+						{field:'gids',title:'选择',width:100,align:'center',checkbox:true}, 
+						{field:'pic',title:'商品图片',width:100,align:'center',formatter:function(value,row,index){
+							if(value==""){
+								return "<img src='../../images/show1.jpg' width='100px' height='100px'/>";
+							}else{
+								return "<img src='../../"+value+"' width='100px' height='100px'/>";
+							}
+						}},  
+						{field:'gid',title:'商品编号',width:100,align:'center',sortable:true}, 
+				        {field:'gname',title:'商品名称',width:100,align:'center'},   
+				        {field:'des',title:'商品描述',width:200,align:'center'}, 
+				        {field:'price',title:'商品价格',width:100,align:'center'}, 
+				        {field:'statusStr',title:'状态',width:100,align:'center'}, 
+				        {field:'_operate',title:'操作',width:140,align:'center',formatter:function(val,row,index){
+				        	return "<a href='javascript:delGoods()' class='icon-remove1 icon-padding'>删除</a>"+
+				        	"<a href='javascript:updateGoods("+JSON.stringify(row)+")' class='icon-edit2 icon-padding'>修改</a>";
+				        }},
+				    ]],
+				    toolbar:"#goods_search"
+				});  
+			}else{//管理员
+				alert("您不是店家！！！");
+				return;
+			}
+		},"json");
+	});
+	
+	function addGoods(){
+		if(Rid>1002){//店家
+			$("#addGoods_dialog").dialog("open");
+			$("#goods_aid").val(aid);
+		}else{//管理员
+			alert("您不是店家！！！");
+			return;
+		}
+	}
+	
+	function add_goods(){
+		var aid=$("#goods_aid").val();
+		var spid=$("#shopping_name option:selected").val();
+		var gname=$("#goods_name").val();
+		var price=$("#goods_price").val();
+		var des=ue.getPlainTxt();
+		
+		$.ajaxFileUpload({
+			url:"../../goodsServlet?op=addGoods",
+			secureuri:false,
+			fileElementId:"goods_pic",
+			dataType:"json",
+			data:{aid:aid,spid:spid,gname:gname,price:price,des:des},
+			success:function(data,status){
+				data=parseInt($.trim(data));
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'商品添加成功',timeout:2000,showType:'slide'});
+					$("#addGoods_dialog").dialog("close");
+					$("#editgoods_table").datagrid("reload");
+					$.post("../../goodsServlet",{op:"getIndex"},function(data){
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:'索引刷新成功',timeout:2000,showType:'slide'});
+						}else{
+							$.messager.alert('失败提示','索引刷新失败','error');
+						}
+					});
+				}
+			},
+			error:function(data,status,e){
+				$.messager.alert("失败提示","商品添加失败","error");
+			}
+		});
+	}
+	
+	function updateGoods(row){
+		$("#updateGoods_dialog").dialog("open");
+		$("#update_goods_aid").val(row.aid);
+		$("#update_shopping_name").val(row.spid);
+		$("#update_goods_name").val(row.gname);
+		$("#update_goods_price").val(row.price);
+		$("#update_goods_status").val(row.status);
+		gid=row.gid;
+		if(row.pic!=""){
+			$("#update_goods_pic").attr("src","../../"+row.pic);
+		}
+	}
+	
+	function update_goods(){
+		var gname=$("#update_goods_name").val();
+		var price=$("#update_goods_price").val();
+		var status=$("#update_goods_status").val();
+		var des=ue1.getPlainTxt();
+
+		if(status!=1&&status!=0){
+			return;
+		}
+		
+		$.ajaxFileUpload({
+			url:"../../goodsServlet?op=updateGoods",
+			secureuri:false,
+			fileElementId:"update_goods_pic",
+			dataType:"json",
+			data:{aid:aid,spid:spid,gname:gname,price:price,des:des,status:status,gid:gid},
+			success:function(data,status){
+				data=parseInt($.trim(data));
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'商品修改成功',timeout:2000,showType:'slide'});
+					$("#updateGoods_dialog").dialog("close");
+					$("#editgoods_table").datagrid("reload");
+				}
+			},
+			error:function(data,status,e){
+				$.messager.alert("失败提示","商品修改失败","error");
+			}
+		});
+	}
+	
+	function delGoods(){
+		var rows=$("#editgoods_table").datagrid("getChecked");
+		var gids="";
+		for(var i=0;i<rows.length-1;i++){
+			gids+=rows[i].gid+",";
+		}
+		
+		gids+=rows[i].gid;
+		
+		if(gids==""){
+			$.messager.alert('提示','请选择你要删除的管理员','error');
+			return;
+		}
+		$.post("../../goodsServlet",{op:"delGoods",gid:gids},function(data){
+			if(data>0){
+				$.messager.show({title:'成功提示',msg:'商品删除成功',timeout:2000,showType:'slide'});
+				$("#editgoods_table").datagrid("reload");
+			}else{
+				$.messager.alert('失败提示','商品删除失败','error');
+			}
+		},"json");
+	}
+</script>

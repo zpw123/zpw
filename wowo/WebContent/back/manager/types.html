@@ -1,0 +1,154 @@
+<table id="types_dataInfo"></table>
+
+<div id="types_search" style="height:30px">
+	<a href="javascript:addTypes()" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" style="float:left">添加</a>
+	<div class="datagrid-btn-separator"></div>
+	<a href="javascript:delTypes()" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" style="float:left">删除</a>
+	<div class="datagrid-btn-separator"></div>
+	<a href="javascript:editTypes()" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" style="float:left">修改</a>
+	<div class="datagrid-btn-separator"></div>
+	<a href="javascript:saveTypes()" class="easyui-linkbutton" data-options="iconCls:'icon-save',plain:true" style="float:left">保存</a>
+	<div class="datagrid-btn-separator"></div>
+	<a href="javascript:redoTypes()" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true" style="float:left">撤销</a>
+	<div class="datagrid-btn-separator"></div>
+</div>
+
+<script>
+	var editRow=undefined;
+	var datagrid=$('#types_dataInfo');
+	var statusObj=[{sid:1,statusStr:'正常'},{sid:0,statusStr:'不正常'}];
+	var op="";
+	var flag="";
+	
+	$("#types_dataInfo").datagrid({
+		url:'../../typesServlet',   
+	    queryParams:{op:"findTypesByPage"},
+	    loadMsg:"数据加载中",
+	    fitColumns:true,
+	    striped:true,
+	    nowrap:true,
+	    fit:true,
+	    pagination:true,
+	    rownumbers:true,
+	    pageList:[5,10,20,30,40,50,100],
+	    pageSize:5,
+	    sortName:"tid",
+	    remoteSort:false,
+	    
+	    columns:[[   
+	  			{field:'tids',title:'选择',width:100,align:'center',checkbox:true}, 
+	  			{field:'tid',title:'类型编号',width:80,align:'center',sortable:true}, 
+	  	        {field:'tname',title:'类型名称',width:80,align:'center',editor:{type:"text",options:{required:true}}},     
+	  	        {field:'status',title:'状态',width:100,align:'center',editor:{type:"combobox",
+	  	        	options:{required:true,valueField:'sid',textField:'statusStr',data:statusObj }},
+	  	        	formatter:function(value,row,index){
+		        		for(var i=0;i<statusObj.length;i++){
+		        			if(statusObj[i].sid==value){
+		        				return statusObj[i].statusStr;
+		        			}
+		        		}
+		        		return value;
+		        	}
+	  	        }, 
+	  	        {field:'des',title:'描述',width:100,align:'center',editor:{type:"text"}}, 
+	  	    ]],
+	  	    toolbar:"#types_search"
+	});
+	
+	function addTypes(){
+		op="addTypes";
+		flag="添加";
+		if(editRow!=undefined){
+			datagrid.datagrid("rejectChanges");
+			datagrid.datagrid('endEdit',editRow);
+			editRow=undefined;
+		}else{
+			datagrid.datagrid('insertRow',{index:0,row:{}});
+			datagrid.datagrid('beginEdit',0);
+			editRow=0;
+		}
+		
+	}
+	
+	function delTypes(){
+		var rows=datagrid.datagrid("getChecked");
+		if(rows.length<=0){
+			$.messager.alert('提示','请选择要删除的行','info');
+		}else{
+			$.messager.confirm('删除确认', '你确定要删除选中的数据？', function(rt){
+				if(rt){
+					var tids="";
+					for(var i=0;i<rows.length-1;i++){
+						tids+=row[i].tid+",";
+					}
+					
+					tids+=rows[i].tid;
+					
+					$.post("../../typesServlet",{op:"delTypes",tid:tids},function(data){
+						data=parseInt(data);
+						if(data>0){
+							$.messager.show({title:'成功提示',msg:'商品类型删除成功',timeout:2000,showType:'slide'});
+							datagrid.datagrid("reload");
+						}else{
+							$.messager.alert('失败提示','商品类型删除失败','error');
+							datagrid.datagrid("reload");
+							datagrid.datagrid("unselectAll");
+						}
+					});
+				}
+			});
+		}
+	}
+	
+	function editTypes(){
+		op="editTypes";
+		flag="修改";
+		var row=datagrid.datagrid("getChecked")[0];
+		if(row==undefined){
+			$.messager.alert('提示','请选择要修改的行','info');
+		}else{
+			if(editRow!=undefined){
+				datagrid.datagrid("rejectChanges");
+				datagrid.datagrid('endEdit',editRow);
+				editRow=undefined;
+			}else{
+				var index=datagrid.datagrid("getRowIndex",row);
+				datagrid.datagrid("updateRow",{index:index,row:row});
+				datagrid.datagrid("beginEdit",index);
+				editRow=index;
+			}
+		}
+	}
+	
+	function saveTypes(){
+		datagrid.datagrid('endEdit',editRow);
+		var rows=datagrid.datagrid("getChanges")[0];
+		if(rows==undefined){
+			datagrid.datagrid("rejectChanges");
+			datagrid.datagrid("unselectAll");
+			editRow=undefined;
+		}else{
+			rows["op"]=op;
+			
+			$.post("../../typesServlet",rows,function(data){
+				data=parseInt(data);
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'商品类型'+flag+'成功',timeout:2000,showType:'slide'});
+					rows=null;
+					datagrid.datagrid("reload");
+					datagrid.datagrid("unselectAll");
+				}else{
+					$.messager.alert('失败提示','商品类型'+flag+'失败','error');
+					datagrid.datagrid("reload");
+					datagrid.datagrid("unselectAll");
+				}
+			});
+		}
+	}
+	
+	function redoTypes(){
+		datagrid.datagrid("rejectChanges");
+		datagrid.datagrid('endEdit',editRow);
+		editRow=undefined;
+	}
+</script>

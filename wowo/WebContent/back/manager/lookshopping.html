@@ -1,0 +1,211 @@
+<style>
+	.update_shopping_info>ul>li{
+		list-style-type:none;
+		margin-top:20px;
+	}
+	
+	.update_shopping_info>ul>li>span{
+		display:inline-block;
+		width:120px;
+		text-align:right;
+		margin-right:10px;
+	}
+	
+	.update_shopping_info>ul>li>input,.add_shopping_info>ul>li>select{
+		width:200px;
+		border:1px solid #6198CD;
+	}
+	
+	.updateshopping{
+		margin-left:80px;
+		margin-top:20px;
+	}
+</style> 
+<table id="lookshopping"></table>  
+
+<div id="updateShopping" class="easyui-dialog" title="修改店铺信息" data-options="iconCls:'icon-save',resizable:true,modal:true,fit:true,closed:true" >  
+<div class="update_shopping_info">
+	<input class="updateshopping" type="button" value="修改店铺" onclick="update_shopping()"/>
+	<ul>
+		<li><span>后台店家编号：</span> 
+			<input name="update_shopping_aid" id="update_shopping_aid"/>
+			<input type="hidden" name="update_shopping_spid" id="update_shopping_spid"/>
+			
+		<span>店铺名称：</span> <input type="text" name="update_shopping_sname" id="update_shopping_sname" placeholder="请输入你的店铺名称" required="required">
+			
+		<span>店铺类型：</span> 
+			<select name="update_shopping_tid" id="update_shopping_tid"></select>
+		</li>
+		
+		<li> 
+			<span>省份：</span> 
+			<select name="update_shopping_prov" id="province">
+				<option value="-1">--请选择省份--</option>
+			</select>
+			<span>城市：</span> 
+			<select name="update_shopping_city" id="city">
+				<option value="-1">--请选择城市--</option>
+			</select>
+			<span>地区：</span> 
+			<select name="update_shopping_area" id="district">
+				<option value="-1">--请选择地区--</option>
+			</select>
+		</li>
+		
+		<li><span>详细地址：</span> 
+		<input type="text" name="update_shopping_addr" id="update_shopping_addr" placeholder="请输入你的详细地址" required="required">
+			
+		<span>联系方式：</span> 
+		<input type="text" name="update_shopping_tel" id="update_shopping_tel" placeholder="请输入你的联系方式" required="required">
+		</li>
+		
+		<li>
+			<span>店铺信息：</span> 
+			<script id="editor" type="text/plain" style="width:900px;height:300px;margin-left:70px"></script>
+		</li>
+	</ul>
+</div>
+</div>
+
+<script src="../js/managershopping.js"></script>
+<script>
+	var ue=UE.getEditor('editor');
+	var aid;
+	var Rid;
+	var spid;
+	$(function(){
+		$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+			aid=data.aid;
+			Rid=data.rid;
+			if(Rid>1002){//店家
+				getTable();
+			}else{//管理员
+				$('#lookshopping').datagrid({   
+					url:'../../shoppingServlet',   
+				    queryParams:{op:"findShoppingAllByPage"},
+				    loadMsg:"数据加载中",
+				    fitColumns:true,
+				    striped:true,
+				    nowrap:true,
+				    fit:true,
+				    pagination:true,
+				    rownumbers:true,
+				    pageList:[5,10,20,30,40,50,100],
+				    pageSize:5,
+				    sortName:"spid",
+				    remoteSort:false,   
+				    columns:[[   
+						{field:'spids',title:'选择',width:100,checkbox:true}, 
+				        {field:'spid',title:'店铺编号',width:100,sortable:true},   
+				        {field:'sname',title:'店铺名称',width:100},   
+				        {field:'aname',title:'店铺管理员',width:100,align:'right'},
+				        {field:'tname',title:'商品类型',width:100,align:'right'},
+				        {field:'prov',title:'prov',width:100,align:'right'},
+				        {field:'city',title:'city',width:100,align:'right'},
+				        {field:'area',title:'area',width:100,align:'right'},
+				        {field:'points',title:'详细地址',width:100,align:'right'},
+				        {field:'info',title:'店铺描述',width:100,align:'right'},
+				        {field:'statusStr',title:'店铺状态',width:100,align:'right'}
+				    ]]   
+				}); 
+			}
+		},"json");
+	});
+
+	function getTable(){
+		$('#lookshopping').datagrid({   
+			url:'../../shoppingServlet',   
+		    queryParams:{op:"findShoppingByPage",aid:aid},
+		    loadMsg:"数据加载中",
+		    fitColumns:true,
+		    striped:true,
+		    nowrap:true,
+		    fit:true,
+		    pagination:true,
+		    rownumbers:true,
+		    pageList:[5,10,20,30,40,50,100],
+		    pageSize:5,
+		    sortName:"spid",
+		    remoteSort:false,   
+		    columns:[[   
+				{field:'spids',title:'选择',width:100,checkbox:true}, 
+		        {field:'spid',title:'店铺编号',width:100,align:'center',sortable:true},   
+		        {field:'sname',title:'店铺名称',width:100,align:'center'},   
+		        {field:'aname',title:'店铺管理员',width:100,align:'center'},
+		        {field:'tname',title:'商品类型',width:100,align:'center'},
+		        {field:'prov',title:'prov',width:150,align:'center'},
+		        {field:'city',title:'city',width:150,align:'center'},
+		        {field:'area',title:'area',width:150,align:'center'},
+		        {field:'points',title:'详细地址',width:100,align:'center'},
+		        {field:'statusStr',title:'店铺状态',width:100,align:'center'},
+		        {field:'_operate',title:'操作',width:250,align:'center',formatter:function(val,row,index){
+		        	return "<a href='' class='icon-search1 icon-padding' >详细</a>"+" "+
+		        	"&nbsp;&nbsp;<a href='javascript:delShopping("+JSON.stringify(row)+")' class='icon-remove1 icon-padding'>删除</a>"+" "+
+		        	"<a href='javascript:updateShopping("+JSON.stringify(row)+")' class='icon-edit2 icon-padding'>修改</a>";
+		        }}
+		    ]],
+		    
+		}); 
+	} 
+	
+	function delShopping(row){
+		var spid=row.spid;
+		
+		$.post("../../shoppingServlet",{op:"delShopping",spid:spid},function(data){
+			if(data>0){
+				$.messager.show({title:'成功提示',msg:'店铺删除成功',timeout:2000,showType:'slide'});
+				$("#lookshopping").datagrid("reload");
+			}else{
+				$.messager.alert("失败提示","店铺删除失败","error");
+			}
+		});
+	}
+	
+	function updateShopping(row){
+		if(Rid>1002){//店家
+			$("#updateShopping").dialog("open");
+			$.post("../../shoppingServlet",{op:"getType"},function(data){
+				$.each(data,function(index,item){
+					$("#update_shopping_tid").append($("<option value='"+item.tid+"'>"+item.tname+"</option>"));
+				});
+			},"json");
+			$("#update_shopping_tid").val(row.tid);
+			$("#update_shopping_aid").val(row.aid);
+			$("#update_shopping_sname").val(row.sname);
+			$("#update_shopping_tel").val(row.tel);
+			$("#update_shopping_addr").val(row.points);
+			$("#update_shopping_spid").val(row.spid);
+		}else{//管理员
+			alert("您不是店家,不能修改此店铺！！！");
+			return;
+		}
+	}
+	
+	function update_shopping(){
+		var spid=$("#update_shopping_spid").val(); 
+		var sname=$("#update_shopping_sname").val(); 
+		var tel=$("#update_shopping_tel").val(); 
+		var addr=$("#update_shopping_addr").val(); 
+		var tid=$("#update_shopping_tid").val(); 
+		var prov=$("#province option:selected").text(); 
+		var city=$("#city option:selected").text();
+		var area=$("#district option:selected").text();
+		var shopmessage=ue.getPlainTxt();
+		
+		if(aid==""||tid==""||sname==""||prov==""||city==""||area==""||addr==""||tel==""||shopmessage==""){
+			return;
+		}
+		
+		$.post("../../shoppingServlet",{op:"updateShopping",sname:sname,tel:tel,addr:addr,tid:tid,prov:prov,city:city,area:area,shopmessage:shopmessage,spid:spid},function(data){
+			data=parseInt(data);
+			if(data>0){
+				$.messager.show({title:'成功提示',msg:'店铺信息修改成功',timeout:2000,showType:'slide'});
+				$("#updateShopping").dialog("close");
+				$("#lookshopping").datagrid("reload");
+			}else{
+				alert("修改店铺信息失败");
+			}
+		});
+	}
+</script>
+

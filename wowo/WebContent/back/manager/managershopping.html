@@ -1,0 +1,121 @@
+<style>
+	.add_shopping_info>ul>li{
+		list-style-type:none;
+		margin-top:20px;
+	}
+	
+	.add_shopping_info>ul>li>span{
+		display:inline-block;
+		width:120px;
+		text-align:right;
+		margin-right:10px;
+	}
+	
+	.add_shopping_info>ul>li>input,.add_shopping_info>ul>li>select{
+		width:200px;
+		border:1px solid #6198CD;
+	}
+	
+	#addshopping_style{
+		margin-left:100px;
+		margin-top:20px;
+	}
+</style>
+
+<a id="addshopping_style" href="javascript:addShopping()" class="easyui-linkbutton" onclick="addShopping()">添加店铺</a>
+	
+<div class="add_shopping_info">
+	<ul>
+		<li><span>后台店家编号：</span> 
+			<input name="manager_shopping_aid" id="manager_shopping_aid"/>
+			
+		<span>店铺名称：</span> <input type="text" name="manager_shopping_sname" id="manager_shopping_sname" placeholder="请输入你的店铺名称" required="required">
+			
+		<span>店铺类型：</span> 
+			<select name="manager_shopping_tid" id="manager_shopping_tid"></select>
+		</li>
+		
+		<li> 
+			<span>省份：</span> 
+			<select name="manager_shopping_prov" id="province">
+				<option value="-1">--请选择省份--</option>
+			</select>
+			<span>城市：</span> 
+			<select name="manager_shopping_city" id="city">
+				<option value="-1">--请选择城市--</option>
+			</select>
+			<span>地区：</span> 
+			<select name="manager_shopping_area" id="district">
+				<option value="-1">--请选择地区--</option>
+			</select>
+		</li>
+		
+		<li><span>详细地址：</span> 
+		<input type="text" name="manager_shopping_addr" id="manager_shopping_addr" placeholder="请输入你的详细地址" required="required">
+			
+		<span>联系方式：</span> 
+		<input type="text" name="manager_shopping_tel" id="manager_shopping_tel" placeholder="请输入你的联系方式" required="required">
+		</li>
+		
+		<li>
+			<span>店铺信息：</span> 
+			<a href="javascript:add_shoppingInfo()" class="easyui-linkbutton" data-options="iconCls:'icon-add'">添加</a>
+			<script id="editor" type="text/plain" style="width:900px;height:300px;margin-left:70px"></script>
+		</li>
+	</ul>
+</div>
+
+<script type="text/javascript" src="../js/managershopping.js"></script>
+<script>
+	var Rid;
+	$(function(){
+		$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+			$("#manager_shopping_aid").val(data.aid);
+		},"json");
+		
+		$.post("../../shoppingServlet",{op:"getType"},function(data){
+			$.each(data,function(index,item){
+				$("#manager_shopping_tid").append($("<option value='"+item.tid+"'>"+item.tname+"</option>"));
+			});
+		},"json");
+		
+		$.post("../../shoppingServlet",{op:"getAdmin"},function(data){
+			Rid=data.rid;
+		},"json");
+	});
+
+	var ue=UE.getEditor('editor');
+	function add_shoppingInfo(){
+		UE.getEditor('editor').execCommand('insertHtml',"这个人很懒，什么也没有留下...");
+	}
+	
+	function addShopping(){
+		if(Rid>1002){//店家
+			var aid=$.trim($("#manager_shopping_aid").val());
+			var tid=$.trim($("#manager_shopping_tid").val());
+			var sname=$.trim($("#manager_shopping_sname").val());
+			var prov=$.trim($("#province option:selected").text());
+			var city=$.trim($("#city option:selected").text());
+			var area=$.trim($("#district option:selected").text());
+			var addr=$.trim($("#manager_shopping_addr").val());
+			var tel=$.trim($("#manager_shopping_tel").val());
+			var shopmessage=ue.getPlainTxt();
+			
+			if(aid==""||tid==""||sname==""||prov==""||city==""||area==""||addr==""||tel==""||shopmessage==""){
+				return;
+			}
+			
+			$.post("../../shoppingServlet",{op:"addShopping",aid:aid,tid:tid,sname:sname,city:city,area:area,tel:tel,prov:prov,addr:addr,shopmessage:shopmessage},function(data){
+				data=parseInt(data);
+				if(data>0){
+					$.messager.show({title:'成功提示',msg:'店铺信息添加成功',timeout:2000,showType:'slide'});
+				}else{
+					alert("添加店铺信息失败");
+				}
+			});
+		}else{//管理员
+			alert("您不是店家！！！");
+			return;
+		}
+	}
+</script>
